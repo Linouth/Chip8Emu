@@ -37,7 +37,7 @@ void DisassembleChip8(uint8_t *codebuffer, int pc) {
                        printf("  if(V%1x!=0x%02x)", reg, code[1]);
                    }
                    break;
-        case 0x05: printf("5 not handled yet", firstnib); break;
+        case 0x05: printf("5 not handled yet"); break;
         case 0x06: {
                        uint8_t reg = code[0] & 0x0f;
                        printf("  V%1x = 0x%02x", reg, code[1]);
