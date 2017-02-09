@@ -2,7 +2,7 @@ CC	= gcc
 OPT	= -Wall -g
 COMP = $(CC) $(OPT) 
 
-FILES	= emulator.c
+FILES	= chip8emu.c
 OUT_DIR	= out
 
 

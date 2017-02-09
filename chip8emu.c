@@ -35,12 +35,105 @@ void Op0(Chip8State *state, uint8_t *op) {
     
 }
 
+// goto NNN;
 void Op1(Chip8State *state, uint8_t *op) {
     uint16_t target = ((op[0] & 0x0f) << 8) | op[1];
     state->PC = target;
 }
 
+// *(0xNNN)()
 void Op2(Chip8State *state, uint8_t *op) {
+
+}
+
+// if(Vx==NN)
+void Op3(Chip8State *state, uint8_t *op) {
+    uint8_t reg = op[0] & 0x0f;
+    if (state->V[reg] == op[1]) {
+        state->PC += 4;
+    } else {
+        state->PC += 2;
+    }
+}
+
+// if(Vx!=NN)
+void Op4(Chip8State *state, uint8_t *op) {
+    uint8_t reg = op[0] & 0x0f;
+    if (state->V[reg] != op[1]) {
+        state->PC += 4;
+    } else {
+        state->PC += 2;
+    }
+}
+
+// if(Vx==Vy)
+void Op5(Chip8State *state, uint8_t *op) {
+    uint8_t regx = op[0] & 0x0f;
+    uint8_t regy = op[1]  >> 4;
+    if (state->V[regx] == state->V[regy]) {
+        state->PC += 4;
+    } else {
+        state->PC += 2;
+    }
+}
+
+// Vx = NN
+void Op6(Chip8State *state, uint8_t *op) {
+    uint8_t reg = op[0] & 0x0f;
+    state->V[reg] = op[1];
+    state->PC += 2;
+}
+
+// Vx += NN
+void Op7(Chip8State *state, uint8_t *op) {
+    uint8_t reg = op[0] & 0x0f;
+    state->V[reg] += op[1];
+    state->PC += 2;
+}
+
+void Op8(Chip8State *state, uint8_t *op) {
+    
+}
+
+// if(Vx!=Vy)
+void Op9(Chip8State *state, uint8_t *op) {
+    uint8_t regx = op[0] & 0x0f;
+    uint8_t regy = op[1] >> 4;
+    if (state->V[regx] != state->V[regy]) {
+        state->PC += 4;
+    } else {
+        state->PC += 2;
+    }
+}
+
+// I = NNN
+void OpA(Chip8State *state, uint8_t *op) {
+    uint16_t dat = ((op[0] & 0x0f) << 8) | op[1];
+    state->I = dat;
+    state->PC += 2;
+}
+
+// PC=V0+NNN
+void OpB(Chip8State *state, uint8_t *op) {
+    uint16_t dat = ((op[0] & 0x0f) << 8) | op[1];
+    state->PC = state->V[0] + dat;
+}
+
+// Vx=rand()&NN
+void OpC(Chip8State *state, uint8_t *op) {
+
+}
+
+// draw(Vx,Vy,N)
+void OpD(Chip8State *state, uint8_t *op) {
+
+}
+
+void OpE(Chip8State *state, uint8_t *op) {
+
+}
+
+void OpF(Chip8State *state, uint8_t *op) {
 
 }
 
