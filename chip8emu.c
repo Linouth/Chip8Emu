@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 
 struct Chip8State {
@@ -21,7 +22,7 @@ Chip8State* InitChip() {
 
     s->memory   = calloc(1024*4, 1);
     s->screen   = &s->memory[0xf00];
-    s->SP       = 0xea0;  //0xfa0
+    s->SP       = 0xfa0;  // 0xEA0-0xEFF
     s->PC       = 0x200;
 
     return s;
@@ -32,18 +33,36 @@ void UnimplementedInstruction(Chip8State *state) {
 }
 
 void Op0(Chip8State *state, uint8_t *op) {
-    
+    switch(op[1]) {
+        case 0xe0:  // CLEAR
+            memset(state->screen, 0, 64*32/8);  // Why /8?
+            state->PC += 2;
+            break;
+        case 0xee:  // return;
+            {
+                uint16_t target = (state->memory[state->SP] << 8) | state->memory[state->SP + 1];
+                state->SP += 2;
+                state->PC = target;
+            }
+            break;
+        default:
+            UnimplementedInstruction(state);
+            break;
+    }
 }
 
 // goto NNN;
 void Op1(Chip8State *state, uint8_t *op) {
-    uint16_t target = ((op[0] & 0x0f) << 8) | op[1];
-    state->PC = target;
+    state->PC = ((op[0] & 0x0f) << 8) | op[1];
 }
 
 // *(0xNNN)()
 void Op2(Chip8State *state, uint8_t *op) {
-
+    state->SP -= 2;
+    // state->memory[state->SP] = ((state->PC + 2) & 0xff00) >> 8;
+    state->memory[state->SP] = (state->PC + 2) >> 8;            // (PC + 2) for next instruction
+    state->memory[state->SP + 1] = (state->PC + 2) & 0xff;
+    state->PC = ((op[0] & 0x0f) << 8) | op[1];
 }
 
 // if(Vx==NN)
