@@ -182,8 +182,43 @@ void OpC(Chip8State *state, uint8_t *op) {
 }
 
 // draw(Vx,Vy,N)
-void OpD(Chip8State *state, uint8_t *op) {
-    // TODO
+void OpD(Chip8State *state, uint8_t *op) {  // TODO: ??  Comment...
+    int height  = op[1] & 0x0f;
+    int x       = state->V[op[0] & 0x0f];
+    int y       = state->V[op[1] >> 4];
+
+    state->V[0x0f] = 0;
+    for (int i = 0; i < height; i++) {  // Loop through each row
+        uint8_t *sprite = &state->memory[state->I+i];
+        int spritebit = 7;
+        for (int j = x; j < x+8 && j < 64; j++) {  // Loop through sprite row
+            int byte_in_row = j / 8;
+            int bit_in_byte = j % 8;
+
+            uint8_t srcbit = (*sprite >> spritebit) & 0x01;
+            if (srcbit) {
+                uint8_t *destbyte_p = &state->screen[(i+y) * (64/8) + byte_in_row];
+                uint8_t destbyte = *destbyte_p;
+                uint8_t destmask = (0x80 >> bit_in_byte);
+                uint8_t destbit = destbyte & destmask;
+
+                srcbit = srcbit << (7-bit_in_byte);
+
+                if (srcbit &destbit) {
+                    state->V[0x0f] = 1;
+                }
+
+                destbit ^= srcbit;
+
+                destbyte = (destbyte & ~destmask) | destbit;
+
+                *destbyte_p = destbyte;
+            }
+            spritebit--;
+        }
+    }
+
+    state->PC += 2;
 }
 
 void OpE(Chip8State *state, uint8_t *op) {
