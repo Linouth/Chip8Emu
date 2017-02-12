@@ -32,6 +32,8 @@ Chip8State* InitChip() {
     s->SP       = 0xfa0;  // 0xEA0-0xEFF
     s->PC       = 0x200;
 
+    memcpy(&s->memory[FONT_BASE], font, FONT_SIZE);
+
     return s;
 }
 
@@ -312,33 +314,53 @@ void OpF(Chip8State *state, uint8_t *op) {
 
 void EmulateChip8Op(Chip8State *state) {
     uint8_t *op = &state->memory[state->PC];
+    printf("%02x %02x\n", op[0], op[1]);
 
     // int highnib = (*op & 0xf0) >> 4;
     int highnib = *op >> 4;
     switch(highnib) {
-        case 0x00: UnimplementedInstruction(state); break;
+        case 0x00: Op0(state, op); break;
         case 0x01: Op1(state, op); break;
-        case 0x02: UnimplementedInstruction(state); break;
-        case 0x03: UnimplementedInstruction(state); break;
-        case 0x04: UnimplementedInstruction(state); break;
-        case 0x05: UnimplementedInstruction(state); break;
-        case 0x06: UnimplementedInstruction(state); break;
-        case 0x07: UnimplementedInstruction(state); break;
-        case 0x08: UnimplementedInstruction(state); break;
-        case 0x09: UnimplementedInstruction(state); break;
-        case 0x0a: UnimplementedInstruction(state); break;
-        case 0x0b: UnimplementedInstruction(state); break;
-        case 0x0c: UnimplementedInstruction(state); break;
-        case 0x0d: UnimplementedInstruction(state); break;
-        case 0x0e: UnimplementedInstruction(state); break;
-        case 0x0f: UnimplementedInstruction(state); break;
+        case 0x02: Op2(state, op); break;
+        case 0x03: Op3(state, op); break;
+        case 0x04: Op4(state, op); break;
+        case 0x05: Op5(state, op); break;
+        case 0x06: Op6(state, op); break;
+        case 0x07: Op7(state, op); break;
+        case 0x08: Op8(state, op); break;
+        case 0x09: Op9(state, op); break;
+        case 0x0a: OpA(state, op); break;
+        case 0x0b: OpB(state, op); break;
+        case 0x0c: OpC(state, op); break;
+        case 0x0d: OpD(state, op); break;
+        case 0x0e: OpE(state, op); break;
+        case 0x0f: OpF(state, op); break;
     }
 }
 
-int main(void) {
+void LoadRom(Chip8State *state, FILE *file) {
+    fseek(file, 0L, SEEK_END);
+    int fsize = ftell(file);
+    rewind(file);
+
+    fread(state->memory+0x200, fsize, 1, file);
+}
+
+int main(int argc, char *argv[]) {
     Chip8State *state = InitChip();
 
-    EmulateChip8Op(state);
+    FILE *rom = fopen(argv[1], "rb");
+    if (rom==NULL) {
+        fprintf(stderr, "Error: Could not open %s\n", argv[1]);
+        exit(1);
+    }
+
+    LoadRom(state, rom);
+    fclose(rom);
+
+    for (int i = 0; i < 100; i++) {
+        EmulateChip8Op(state);
+    }
 
     return 0;
 }

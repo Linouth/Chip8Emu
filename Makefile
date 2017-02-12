@@ -13,7 +13,7 @@ dis: chip8dis.c
 	$(COMP) -o $(OUT_DIR)/chip8dis chip8dis.c
 
 window: window.c
-	$(COMP) -o $(OUT_DIR)/window -L/usr/lib -lGL -lglut window.c
+	$(COMP) -o $(OUT_DIR)/window -L/usr/lib -lGL -lglut -lGLEW window.c
 
 
 clean:
