@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <string.h>
 
 
 struct Chip8State {
@@ -13,6 +15,9 @@ struct Chip8State {
     uint8_t     sound;
     uint8_t     *memory;
     uint8_t     *screen;
+    uint8_t     key_state[16];
+    uint8_t     save_key_state[16];
+    int         waiting_for_key;
 };
 
 typedef struct Chip8State Chip8State;
@@ -29,7 +34,7 @@ Chip8State* InitChip() {
 }
 
 void UnimplementedInstruction(Chip8State *state) {
-    printf("Instruction for opcode %04x not implemented", state->memory[state->PC]);
+    printf("Instruction for opcode %04x not implemented\n", state->memory[state->PC]);
 }
 
 void Op0(Chip8State *state, uint8_t *op) {
@@ -142,6 +147,7 @@ void Op8(Chip8State *state, uint8_t *op) {
             state->V[x] = state->V[x] << 1;
             break;
     }
+    state->PC += 2;
 }
 
 // if(Vx!=Vy)
@@ -170,20 +176,99 @@ void OpB(Chip8State *state, uint8_t *op) {
 
 // Vx=rand()&NN
 void OpC(Chip8State *state, uint8_t *op) {
-
+    uint8_t reg = op[0] & 0x0f;
+    state->V[reg] = random() & op[1];
+    state->PC += 2;
 }
 
 // draw(Vx,Vy,N)
 void OpD(Chip8State *state, uint8_t *op) {
-
+    // TODO
 }
 
 void OpE(Chip8State *state, uint8_t *op) {
-
+    uint8_t reg = op[0] & 0x0f;
+    switch(op[1]) {
+        case 0x9e:  // if(key()==Vx)
+            if (state->key_state[state->V[reg]] != 0) {
+                state->PC += 2;
+            }
+            break;
+        case 0xa1:  // if(key()!=Vx)
+            if (state->key_state[state->V[reg]] == 0) {
+                state->PC += 2;
+            }
+            break;
+    }
+    state->PC += 2;
 }
 
 void OpF(Chip8State *state, uint8_t *op) {
-
+    uint8_t reg = op[0] & 0x0f;
+    switch(op[1]){
+        case 0x07:  // Vx = get_delay()
+            state->V[reg] = state->delay;
+            break;
+        case 0x0a:  // Vx = get_key();  Wait until key pressed
+            {
+                if (state->waiting_for_key == 0) {
+                    // Save key_states
+                    memcpy(&state->save_key_state, &state->key_state, 16);
+                    state->waiting_for_key = 1;
+                    return;  // Return without PC++
+                } else {
+                    for (int i = 0; i < 16; i++) {  // Loop through all 16 keys
+                        if ((state->save_key_state[i] == 0) && (state->key_state[i] == 1)) {  // New key pressed
+                            state->V[reg] = i;  // Save key to register
+                            state->waiting_for_key = 0;
+                            state->PC += 2;
+                            return;
+                        }
+                    }
+                    return;  // Return without PC++
+                }
+            }
+            break;
+        case 0x15:  // delay_timer(Vx)
+            state->delay = state->V[reg];
+            break;
+        case 0x18:  // sound_timer(Vx)
+            state->sound = state->V[reg];
+            break;
+        case 0x1e:  // I += Vx
+            state->I += state->V[reg];
+            break;
+        case 0x29:  // I = sprite_addr[Vx]
+            state->I = state->V[reg] * 5;  // *5 for 5 rows
+            break;
+        case 0x33:  // BCD
+            {
+                uint8_t Vx = state->V[reg];
+                state->memory[state->I+2] = Vx % 10;    // ones
+                Vx /= 10;
+                state->memory[state->I+1] = Vx % 10;    // tens
+                state->memory[state->I] = Vx / 10;      // hundreds
+            }
+            break;
+        case 0x55:  // reg_dump(Vx, &I)
+            {
+                for (int i = 0; i <= reg; i++) {
+                    state->memory[state->I+i] = state->V[i];
+                }
+            }
+            break;
+        case 0x65:  // reg_load(Vx, &I)
+            {
+                for (int i = 0; i <= reg; i++) {
+                    state->V[i] = state->memory[state->I+i];
+                }
+            }
+            break;
+        default:
+            UnimplementedInstruction(state);
+            break;
+    }
+    state->PC += 2;
 }
 
 void EmulateChip8Op(Chip8State *state) {
