@@ -111,7 +111,37 @@ void Op7(Chip8State *state, uint8_t *op) {
 }
 
 void Op8(Chip8State *state, uint8_t *op) {
-    
+    uint8_t x = op[0] & 0x0f;
+    uint8_t y = op[1] >> 4;
+    switch(op[1] & 0x0f) {
+        case 0x00:  // Vx=Vy
+            state->V[x] = state->V[y];
+            break;
+        case 0x01:  // Vx=Vx|Vy
+            state->V[x] = state->V[x] | state->V[y];
+            break;
+        case 0x02:  // Vx=Vx&Vy
+            state->V[x] = state->V[x] & state->V[y];
+            break;
+        case 0x03:  // Vx=Vx^Vy
+            state->V[x] = state->V[x] ^ state->V[y];
+            break;
+        case 0x04:  // Vx += Vy
+            state->V[x] += state->V[y];
+            break;
+        case 0x05:  // Vx -= Vy
+            state->V[x] -= state->V[y];
+            break;
+        case 0x06:  // Vx >> 1
+            state->V[x] = state->V[x] >> 1;
+            break;
+        case 0x07:  // Vx=Vy-Vx
+            state->V[x] = state->V[y] - state->V[x];
+            break;
+        case 0x0e:  // Vx << 1
+            state->V[x] = state->V[x] << 1;
+            break;
+    }
 }
 
 // if(Vx!=Vy)
