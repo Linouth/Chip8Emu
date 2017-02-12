@@ -2,7 +2,7 @@ CC	= gcc
 OPT	= -Wall -g
 COMP = $(CC) $(OPT) 
 
-FILES	= chip8emu.c
+FILES	= chip8emu.c font.c
 OUT_DIR	= out
 
 
@@ -11,6 +11,9 @@ build: $(FILES)
 
 dis: chip8dis.c
 	$(COMP) -o $(OUT_DIR)/chip8dis chip8dis.c
+
+window: window.c
+	$(COMP) -o $(OUT_DIR)/window -L/usr/lib -lGL -lglut window.c
 
 
 clean:
