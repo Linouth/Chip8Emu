@@ -5,6 +5,8 @@
 #include <time.h>
 #include <string.h>
 
+#include "font.h"
+
 
 struct Chip8State {
     uint8_t     V[16];
@@ -253,7 +255,9 @@ void OpF(Chip8State *state, uint8_t *op) {
                     return;  // Return without PC++
                 } else {
                     for (int i = 0; i < 16; i++) {  // Loop through all 16 keys
-                        if ((state->save_key_state[i] == 0) && (state->key_state[i] == 1)) {  // New key pressed
+                        if ((state->save_key_state[i] == 0) && (state->key_state[i] == 1)) {
+                            // New key pressed
+
                             state->V[reg] = i;  // Save key to register
                             state->waiting_for_key = 0;
                             state->PC += 2;
@@ -274,7 +278,7 @@ void OpF(Chip8State *state, uint8_t *op) {
             state->I += state->V[reg];
             break;
         case 0x29:  // I = sprite_addr[Vx]
-            state->I = state->V[reg] * 5;  // *5 for 5 rows
+            state->I = FONT_BASE + state->V[reg] * 5;  // *5 for 5 rows
             break;
         case 0x33:  // BCD
             {

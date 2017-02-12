@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 
+#define FONT_BASE 0
 #define FONT_SIZE 5*16  // h*w
 
 extern uint8_t font[];
