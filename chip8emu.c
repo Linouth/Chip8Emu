@@ -314,7 +314,7 @@ void OpF(Chip8State *state, uint8_t *op) {
 
 void EmulateChip8Op(Chip8State *state) {
     uint8_t *op = &state->memory[state->PC];
-    printf("%02x %02x\n", op[0], op[1]);
+    printf("%03x: %02x %02x\n", state->PC, op[0], op[1]);
 
     // int highnib = (*op & 0xf0) >> 4;
     int highnib = *op >> 4;
@@ -346,6 +346,10 @@ void LoadRom(Chip8State *state, FILE *file) {
     fread(state->memory+0x200, fsize, 1, file);
 }
 
+void DumpScreen(Chip8State *state, FILE *file) {
+    fwrite(&state->screen, sizeof(uint8_t), (0xfff-0xeff), file);
+}
+
 int main(int argc, char *argv[]) {
     Chip8State *state = InitChip();
 
@@ -358,9 +362,17 @@ int main(int argc, char *argv[]) {
     LoadRom(state, rom);
     fclose(rom);
 
-    for (int i = 0; i < 100; i++) {
+    for (int i = 0; i < 1024; i++) {
         EmulateChip8Op(state);
     }
+
+    
+    FILE *screen = fopen("screen.dat", "wb");
+    if (screen == NULL) {
+        fprintf(stderr, "Error: Could not open screen.dat\n");
+    }
+    DumpScreen(state, screen);
+    fclose(screen);
 
     return 0;
 }
