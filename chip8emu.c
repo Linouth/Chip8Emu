@@ -200,7 +200,7 @@ void OpD(Chip8State *state, uint8_t *op) {  // TODO: ??  Comment...
             int bit_in_byte = j % 8;
 
             uint8_t srcbit = (*sprite >> spritebit) & 0x01;
-            if (srcbit) {
+            if (srcbit) {  // If the bit is set
                 uint8_t *destbyte_p = &state->screen[(i+y) * (64/8) + byte_in_row];
                 uint8_t destbyte = *destbyte_p;
                 uint8_t destmask = (0x80 >> bit_in_byte);
