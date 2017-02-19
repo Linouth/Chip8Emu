@@ -5,24 +5,9 @@
 #include <time.h>
 #include <string.h>
 
+#include "chip8emu.h"
 #include "font.h"
 
-
-struct Chip8State {
-    uint8_t     V[16];
-    uint16_t    I;
-    uint16_t    SP;
-    uint16_t    PC;
-    uint8_t     delay;
-    uint8_t     sound;
-    uint8_t     *memory;
-    uint8_t     *screen;
-    uint8_t     key_state[16];
-    uint8_t     save_key_state[16];
-    int         waiting_for_key;
-};
-
-typedef struct Chip8State Chip8State;
 
 Chip8State* InitChip() {
     Chip8State* s = calloc(sizeof(Chip8State), 1);
@@ -44,7 +29,7 @@ void UnimplementedInstruction(Chip8State *state) {
 void Op0(Chip8State *state, uint8_t *op) {
     switch(op[1]) {
         case 0xe0:  // CLEAR
-            memset(state->screen, 0, 64*32/8);  // Why /8?
+            memset(state->screen, 0, (64/8)*32);
             state->PC += 2;
             break;
         case 0xee:  // return;

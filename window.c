@@ -40,29 +40,44 @@ void RenderArray() {
         0b00001001,
         0b00001111
     };
+
+    uint8_t sprite2[] = {
+        0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00,
+        0xff, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0x00,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0xff, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0xff, 0x00, 0xff, 0xff, 0xff, 0xff,
+        0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
+        0x00, 0x00, 0x00, 0x00, 0xff, 0x00, 0x00, 0xff,
+        0x00, 0x00, 0x00, 0x00, 0xff, 0xff, 0xff, 0xff
+    };
     int height = 8;
-    int size = 10;
 
-    int curX, curY = 0;
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 8,8, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, sprite2);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-    for (int i = 1; i <= height; i++) {  // Loop through each row
-        uint8_t *row = &sprite[height-i];
-        int bits_left = 7;
-        curX = 0;
+    glEnable(GL_TEXTURE_2D);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 1.0);
+    glVertex2f(-1.0, -1.0);
+    glTexCoord2f(1.0, 1.0);
+    glVertex2f(1.0, -1.0);
+    glTexCoord2f(1.0, 0.0);
+    glVertex2f(1.0, 1.0);
+    glTexCoord2f(0.0, 0.0);
+    glVertex2f(-1.0, 1.0);
+    glEnd();
 
-        for (int j = 0; j < 8; j++) {  // Loop through each bit in row (byte)
-            if ((*row >> bits_left) & 0x01) {  // If the bit is set
-                Rect(curX, curY, 10);
-            }
-            curX += size;
-            bits_left--;
-        }
-        curY += size;
-    }
+    /* glBitmap(8, 8, 0.0, 0.0, 0.0, 0.0, sprite); */
+    glFlush();
 }
 
 
 void RenderScreen() {
+    unsigned char *buffer8 = calloc( 64*32, 1);
+    unsigned char *b8 = buffer8;
     unsigned char screen_dat[] = {
       0x70, 0xff, 0x6d, 0x01, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -97,25 +112,49 @@ void RenderScreen() {
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
       0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
     };
-    unsigned int screen_dat_len = 256;
-
-    int bits_left, bnum, x,
-        y = 32;
-    for (int i = 0; i < screen_dat_len; i++) {
-        unsigned char *b = &screen_dat[screen_dat_len-i];
-        bnum = 7 - (i%8);  // Couting left to right, 0 to 7
-
-        bits_left = 7;
-        for (int j = 1; j <= 8; j++) {  // For bit in byte
-            if ((*b >> bits_left) & 0x01) {  // Bit set
-            }
-            x = (bnum * 8) + j;
-            bits_left--;
-            printf("y: %d, x: %d\n", y, x);
-        }
-        if (i%8 == 0)
-            y--;
+    unsigned char *fb = screen_dat;
+    for (int i=0; i < ((64/8)*32); i++)
+    {
+        uint8_t bw_pix = fb[0];
+        if (bw_pix & 0x80) b8[0] = 0xFF; else b8[0] = 0;
+        if (bw_pix & 0x40) b8[1] = 0xFF; else b8[1] = 0;
+        if (bw_pix & 0x20) b8[2] = 0xFF; else b8[2] = 0;
+        if (bw_pix & 0x10) b8[3] = 0xFF; else b8[3] = 0;
+        if (bw_pix & 0x08) b8[4] = 0xFF; else b8[4] = 0;
+        if (bw_pix & 0x04) b8[5] = 0xFF; else b8[5] = 0;
+        if (bw_pix & 0x02) b8[6] = 0xFF; else b8[6] = 0;
+        if (bw_pix & 0x01) b8[7] = 0xFF; else b8[7] = 0;           
+        b8 += 8;
+        fb++;
     }
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_LUMINANCE, 64,32, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, buffer8);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    glColor3f(1.0, 1.0, 1.0);
+    /* glPixelZoom(1.0, -1.0); */
+    /* glBitmap(64, 32, 0.0, 0.0, 0.0, 0.0, screen_dat); */
+
+    /* glDrawPixels(64, 32, GL_COLOR_INDEX, GL_BITMAP, screen_dat); */
+
+    glEnable(GL_TEXTURE_2D);
+    glBegin(GL_QUADS);
+    glTexCoord2f(0.0, 1.0);
+    glVertex2f(-1.0, -1.0);
+    glTexCoord2f(1.0, 1.0);
+    glVertex2f(1.0, -1.0);
+    glTexCoord2f(1.0, 0.0);
+    glVertex2f(1.0, 1.0);
+    glTexCoord2f(0.0, 0.0);
+    glVertex2f(-1.0, 1.0);
+    glEnd();
+
+
+
+
+    glFlush();
 }
 
 
@@ -132,8 +171,24 @@ void RenderSceneCB() {
     /* Rect(630, 310, 10); */
 
     RenderArray();
+    /* RenderScreen(); */
 
     glutSwapBuffers();
+}
+
+void init() {
+    glClearColor(0.0, 0.0, 0.0, 0.0);
+    glShadeModel(GL_FLAT);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+}
+
+void reshape(int w, int h)
+{
+   glViewport(0, 0, (GLsizei) w, (GLsizei) h);
+   glMatrixMode(GL_PROJECTION);
+   glLoadIdentity();
+   glOrtho (0, w, 0, h, -1.0, 1.0);
+   glMatrixMode(GL_MODELVIEW);
 }
 
 
@@ -142,22 +197,17 @@ int main(int argc, char *argv[]) {
 
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
-
     glutInitWindowSize(WIDTH, HEIGHT);
     glutInitWindowPosition(100, 100);
     glutCreateWindow("Chip8");
 
+    init();
+
+    /* glutReshapeFunc(reshape); */
     glutDisplayFunc(RenderSceneCB);
-
-    glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-
-    /* if (!glewInit()) { */
-    /*     fprintf(stderr, "Error: Failed initializing GLEW"); */
-    /*     return 1; */
-    /* } */
-
-    RenderScreen();
+    /* glutDisplayFunc(RenderScreen); */
 
     glutMainLoop();
+    return 0;
 }
 
